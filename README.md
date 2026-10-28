@@ -1,82 +1,166 @@
-# dsh-taskbox —— DSH 桌面任务浮窗（交付说明）
+# 桌面任务浮窗 · dsh-taskbox
 
-给 DeepSeek Harness（DSH 桌面端）写的插件：把 DSH 放后台干活时，Windows 桌面上留一个**始终置顶的小方框**，
-实时显示各对话的运行状态；需要工具授权 / `ask_user_question` 选择时，**直接在小窗里点选**；点一下把 DSH 主窗口唤回前台。
-窗口高度随内容自适应（最少「标题栏 + 2 行」，最多 6 行；有确认卡片时展开到最高）。
+> **DSH（DeepSeek Harness）桌面端插件**：在 Windows 桌面上留一个**始终置顶的小方框**，实时显示每个对话
+> 在跑什么、几个在等确认；需要**工具授权**或 **`ask_user_question` 选择**时，直接在小窗里点选；
+> 点一下就能把 DSH 主窗口唤回前台。把 DSH 放后台干活时，不用来回切窗口。
 
-![真机：紧凑态](docs/shots/real-dsh-final.png)
-![审批态](docs/shots/v3-approval-dark.png)
+*A tiny always-on-top desktop widget for DeepSeek Harness (DSH): live status for every conversation,
+inline answers for tool approvals and questions, one click back to the main window.*
 
-| 目录 / 文件 | 作用 |
+| 深色 · 待确认 | 浅色 · 紧凑态 |
 |---|---|
-| [`pkg/`](pkg) | **要安装的插件包**（`package.json` / `cordis.patch.yml` / `lib/` / `assets/minibox/` / `locale/` / `icon.svg` / `README.md`） |
-| [`pkg/README.md`](pkg/README.md) | 使用者文档：交互、安装、环境变量、数据落点、「小窗优先」确认时序、限制 |
-| [`docs/PROTOCOL.md`](docs/PROTOCOL.md) | Host 半区 ↔ 小窗进程的 HTTP 协议（两份实现的唯一契约，v1 + v1.1） |
-| [`docs/API-NOTES.md`](docs/API-NOTES.md) | 本次调研的 DSH Host API 契约笔记（会话列表、授权/提问 waterfall、命令注册等，带出处与行号） |
-| [`docs/minibox-selftest.md`](docs/minibox-selftest.md) | 小窗半区自测：场景矩阵、位置/自适应实测、遗留项 |
-| [`mock/mock-host.mjs`](mock/mock-host.mjs) | 协议模拟器：不开 DSH 就能驱动小窗的 8 种画面（`--scenario approval --spawn`） |
-| [`test/`](test) | 离线自检：`host-selftest.mjs`、`race-selftest.mjs`、`live-window.mjs`、`capture.ps1`、`window-control.ps1` |
-| [`docs/shots/`](docs/shots) | 视觉验收截图（含真机截图 `real-dsh-*`、`v3-*`、`v4-default-placement`、`v5-*`） |
+| ![审批态](docs/shots/v3-approval-dark.png) | ![紧凑态](docs/shots/v5-compact-dark.png) |
 
-> 仓库根就是本目录（`E:\dsh插件\桌面任务悬浮窗口`），一个插件一个仓库；上一级 `E:\dsh插件` 用于并排存放其他插件。
+## 特性
 
-## 为什么是「独立进程 + 本地 HTTP」
+- **始终置顶**：无边框、圆角、不进任务栏；DSH 最小化/被其他窗口盖住时也能看见，点一下把主窗口唤回前台。
+- **对话状态实时可见**：会话列表 + 总数，按 `等待确认 → 进行中 → 空闲` 排序；进行中的行显示当前步骤
+  （`bash · pnpm test`、`edit · index.js`、`web_search · wpf topmost` …）。
+- **就地确认**：工具授权（允许一次 / 拒绝）、`ask_user_question`（单选、多选、一次多题）都能在小窗里答，
+  不用切回主窗口。
+- **高度随内容自适应**：只有一两个对话时收成窄条，有待确认卡片时展开到最高；位置会记住。
+- **关掉不丢**：用户主动关掉后，遇到**新的待确认**会自动再弹出来；随时可在 DSH 里输入 `/taskbox` 唤回。
+- **小窗优先**：小窗在跑时，确认先留在浮窗里（默认 20 秒），在这段时间内作答不会在主窗口留下第二张卡片。
+- 深/浅色跟随系统、多屏与不同 DPI 下位置校正、Host 挂掉时显示「离线」并在约 60 秒后自行退出。
 
-DSH 桌面端是 Electron：Web GUI 在壳的 `BrowserWindow` 里，而 **Host 插件跑在一个独立的 Node 子进程**里
-（`@deepseek-ai/dsh-desktop-host`），拿不到 `BrowserWindow`，也不能创建 OS 窗口。所以：
+## 截图
 
-- **Host 半区**（`pkg/lib/`）聚合状态，起一个只监听 `127.0.0.1` 的临时端口（每次启动随机 token）；
-- **小窗**（`pkg/assets/minibox/minibox.ps1`，单文件 PowerShell 5.1 + WPF）是 Host spawn 出来的独立进程：
-  无边框 / 圆角 / `Topmost` / 不进任务栏，靠 1s 轮询 `/state` 拿数据，靠 `POST /action` 回传点击。
+| 多问题（单选 + 多选） | 离线态 |
+|---|---|
+| ![多问题](docs/shots/v3-multi-dark.png) | ![离线](docs/shots/v3-offline-dark.png) |
 
-这是「DSH 最小化到后台仍能看见并确认」唯一可行的做法。
+## 安装
 
-## 安装状态（本机已装好）
+前置：**Windows 10/11** + DSH 桌面端（插件运行在桌面端的 Host 进程里，用系统自带的
+PowerShell 5.1 + .NET Framework 4.8 拉起小窗，不需要额外安装运行时）。
 
-```
-bundle: dsh-taskbox 0.1.0   application: applied
-```
+### 方式 A：通过插件市场（推荐）
 
-插件以 **`link:` 方式**安装，指向本目录的 `pkg/`：**移动/删除本目录会让插件失效**，需要重新 `install_bundle`。
-桌面端读 `desktop` profile，`dsh plugin --profile desktop` 会被设计性拒绝，因此安装/卸载都走宿主内置的 `plugin_manager`：
+1. DSH 侧边栏 → **插件** → **更多** → 启用 **「自定义插件市场」**（实验性）；
+2. 打开 **发现** 标签 → **添加索引源**，填入：
 
-```
-install_bundle   target: "E:\\dsh插件\\桌面任务悬浮窗口\\pkg"
-remove_bundle    target: dsh-taskbox
-```
+   ```
+   https://__GITHUB_OWNER__.github.io/dsh-taskbox/v1/plugins.json
+   ```
 
-改完 `pkg/lib/`（Host 半区）需要让 Host 重新加载：先用 `remove_bundle` 再 `install_bundle`（会重新实例化，无需重启客户端）；
-只改 `pkg/assets/minibox/minibox.ps1` 的话，让窗口重新拉起即可（关掉小窗 → 如果有新确认会自动回来，或用 `/taskbox`）。
+3. 在列表里找到 **桌面任务浮窗** → 安装 → 按提示重启客户端（首次安装需要让 Host 加载新插件）。
 
-## 自检（不需要安装也能跑）
+### 方式 B：宿主内置 `plugin_manager`
+
+在 DSH 会话里直接说：
+
+> 请用 `plugin_manager` 安装 `dsh-taskbox`（npm），装完告诉我是否需要重启。
+
+或者手动调 `plugin_manager`：`install_bundle`，`target` 填 `dsh-taskbox`。
+桌面端读的是 `desktop` profile，**不要**用 `dsh plugin --profile desktop`（会被设计性拒绝）。
+
+### 方式 C：本地开发目录
 
 ```powershell
-node test/host-selftest.mjs     # Host 逻辑：鉴权/会话状态/授权与提问的认领链路（17 项）
-node test/race-selftest.mjs     # 「小窗优先」竞速：宽限期内不转发、超时转发、abort（7 项）
-node test/live-window.mjs       # 真 Host 半区拉起真小窗、自动截图、自动关闭
-node mock/mock-host.mjs --scenario approval --spawn   # 手动玩小窗：8 个剧本
+git clone https://github.com/__GITHUB_OWNER__/dsh-taskbox.git
+# 然后在 DSH 里用 plugin_manager 安装本地的 pkg 目录：
+#   install_bundle  target: "<仓库路径>\pkg"
 ```
 
-## 真机验证记录（2026-10-28，DSH 桌面端 / 本机双屏 125%）
+安装后若浮窗没有出现，**完全退出客户端（含托盘）再打开**。
 
-| 项 | 结果 |
+## 使用
+
+| 操作 | 行为 |
 |---|---|
-| 插件加载 / 小窗自动拉起 / 轮询 | ✅ `host.log`：`booted` → `minibox spawned` → `minibox ready` |
-| 会话列表与计数（真实数据） | ✅ 读到当前对话「桌面置顶任务确认插件 · pwsh」；`158` 对话总数；子智能体会话/空会话已过滤 |
-| **在浮窗里批准工具授权** | ✅ 真机触发一次 `danger-full-access` 探针命令，在浮窗点「允许一次」→ Host 收到 `allowed-once` → 命令执行 |
-| **在浮窗里回答 `ask_user_question`** | ✅ 三次真机问答均由浮窗作答并回传给模型（`ask N answered`） |
-| 关掉小窗后「有新确认自动回来」 | ✅ `/action close` → 新确认 → 自动重新拉起 |
-| 默认位置（右下角、多屏、离谱坐标回退） | ✅ 400×450 → 收在 `2140,910`；异常坐标回落默认 |
-| 高度自适应 | ✅ 1 行时 400×165（132 DIP），有卡片 400×450（360 DIP） |
-| 插件在 DSH 插件页的展示 | ✅ 标题「桌面任务浮窗」+ 中文描述 + 自绘图标，开关可切换 |
-| 点击会话行唤回主窗 / 拖动记忆 / 双击折叠 | ⚠️ 代码与 mock 已验证；真机上的鼠标注入被本会话沙箱禁止，未做自动化点击验证（请手动点一下确认） |
+| 拖动标题栏 | 移动窗口，位置写入 `$DSH_HOME/task-box/window.json` |
+| 双击标题栏 / 折叠 | 收成 320×44 的一行摘要；有待确认时标题栏琥珀色呼吸 |
+| 点某一行对话 | 把 DSH 主窗口还原并置前 |
+| `⤢` | 同上（唤回主窗） |
+| `✕` | 关闭小窗；之后遇到新的待确认会自动再弹，或用 `/taskbox` 唤回 |
+| 「允许一次 / 拒绝」 | 直接对该次工具授权作答 |
+| 选项 / 勾选后「提交」 | 直接回答 `ask_user_question` |
+| DSH 里输入 `/taskbox` | 手动唤回小窗 |
 
-## 已知限制
+## 配置
 
-- 仅 Windows（WPF + Win32 窗口唤醒）。
-- 确认是**一条请求的两个入口**：插件在小窗运行时默认「小窗优先」20 秒（冷启动再加 8 秒），
-  超时后才转发给 DSH 浏览器界面；**如果转发之后你才在小窗作答**，DSH 主窗口那张卡可能滞留到该轮工具结束
-  （客户端行为，插件无法撤回已转发的请求）。用 `DSH_TASKBOX_FORWARD_DELAY_MS` 可调宽限期。
-- `ask_user_question` 里需要**纯文本输入**的问题无法在小窗作答（没有输入法环境），卡片会提示「去主窗口回答」。
-- 小窗是独立进程：Host 崩溃后它连续失败约 60s 会自行退出；DSH 重启会拉起新窗（位置沿用 `window.json`）。
-- 小窗冷启动约 4–6 秒（PowerShell + WPF）。
+| 环境变量 | 默认 | 说明 |
+|---|---|---|
+| `DSH_TASKBOX_AUTOSTART` | `1` | `0` = 不自动拉起小窗（仍可用 `/taskbox`） |
+| `DSH_TASKBOX_FORWARD_DELAY_MS` | `20000` | 小窗运行时，确认先留在小窗多久再转发给 DSH 浏览器界面（`0` = 立刻转发） |
+| `DSH_TASKBOX_DEBUG` | 未设 | 设任意值把插件日志也打到 Host 的 stdout |
+
+运行数据都在 `$DSH_HOME/task-box/`（`$DSH_HOME` 缺省为 `%USERPROFILE%\.dsh`）：
+`server.json`（本地端口 + 每次启动随机 token）、`window.json`（位置）、`host.log`、`minibox.log`。
+
+## 工作原理（为什么是「独立进程 + 本地 HTTP」）
+
+DSH 桌面端是 Electron：Web GUI 在壳的 `BrowserWindow` 里，而 **Host 插件跑在一个独立的 Node 子进程**里，
+拿不到 `BrowserWindow`，也无法创建 OS 窗口。所以本插件拆成两半：
+
+```
+DSH Host 进程 (Node)                          独立小窗进程 (PowerShell + WPF)
+┌──────────────────────────────┐              ┌───────────────────────────┐
+│ pkg/lib/                     │  127.0.0.1   │ pkg/assets/minibox/       │
+│  · 聚合会话/运行状态          │◀──GET /state─│  · 置顶无边框圆角窗口      │
+│  · prepend 拦截 approval/    │              │  · 1s 轮询、状态列表       │
+│    request、user-questions/  │─POST /action▶│  · 确认卡片（按钮/复选）    │
+│    request 两个 waterfall     │  POST /window│  · 唤回主窗、折叠、拖拽     │
+│  · 拉起/回收小窗、token 鉴权  │              │                           │
+└──────────────────────────────┘              └───────────────────────────┘
+```
+
+- 本地 HTTP **只监听 `127.0.0.1`**，端口临时分配、token 每次启动重新生成；不联网、不读凭据。
+- 确认通过 DSH 的 `approval/request` / `user-questions/request` waterfall 认领：小窗作答即返回结果，
+  小窗不在或超时才把请求交给 DSH 自己的浏览器界面。
+- 小窗是**独立进程**，Host 崩溃后它连续失败约 60 秒会自己退出；Host 重启会拉起新窗并沿用上次位置。
+
+协议细节见 [`docs/PROTOCOL.md`](docs/PROTOCOL.md)；DSH Host 侧 API 调研笔记（带出处与行号）见
+[`docs/API-NOTES.md`](docs/API-NOTES.md)。
+
+## 目录结构
+
+```
+pkg/                     要安装/发布的插件包（npm 包 dsh-taskbox）
+  lib/                   Host 半区：index / store / asks / dsh-adapters / http / window
+  assets/minibox/        小窗进程（单文件 PowerShell + WPF，零第三方依赖）
+  locale/                插件市场里的标题与描述
+  icon.svg  cordis.patch.yml  README.md
+catalog/                 社区插件市场的索引源（部署到 GitHub Pages）
+docs/                    协议、调研笔记、小窗自测、验收截图
+mock/mock-host.mjs       协议模拟器：不开 DSH 就能驱动小窗的 8 种画面
+test/                    离线自检 + 真机开窗联调 + 截图/窗口控制脚本
+scripts/                 索引生成与校验
+```
+
+## 开发 / 自检
+
+```powershell
+# 1) Host 逻辑（不需要装 DSH）：鉴权、会话状态、授权与提问的认领链路
+node test/host-selftest.mjs
+
+# 2) 「小窗优先」竞速：宽限期内不转发、超时转发、abort
+node test/race-selftest.mjs
+
+# 3) 手动玩小窗（真正的 WPF 窗口 + 模拟 Host）
+node mock/mock-host.mjs --scenario approval --spawn
+
+# 4) 真机联调：真 Host 半区拉起真小窗、自动截图、自动关闭
+node test/live-window.mjs
+```
+
+发布流程：`npm version <x.y.z>` → `node scripts/build-catalog.mjs` → `git push`（Pages 工作流会校验并部署索引）
+→ `npm publish`。
+
+## 兼容性与已知限制
+
+- 仅 Windows（WPF + Win32 窗口唤醒）；Windows 10/11，125%/150% 缩放下已验证，混合 DPI 多屏未做穷举。
+- 需要支持 `ask_user_question` / `approval` waterfall 的 DSH 版本（0.2.x 桌面端）。
+- `ask_user_question` 里**需要输入文字**的问题无法在小窗作答（小窗没有输入法环境），卡片会提示「去主窗口回答」。
+- 确认是**一条请求的两个入口**：如果在小窗优先的宽限期（默认 20s）过后才在浮窗作答，DSH 主窗口那张卡
+  可能滞留到该轮工具结束（客户端行为，插件无法撤回已转发的请求）。
+- 升级需要先卸载再安装（插件市场的通用限制）。
+
+## 隐私
+
+- 本地 HTTP 只绑回环地址，token 每次启动重生成；插件**不联网、不读凭据**。
+- 日志里只有会话标题、工具名与命令片段，全部写在 `$DSH_HOME/task-box/` 下，可随时删除。
+
+## License
+
+[MIT](LICENSE)

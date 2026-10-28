@@ -1,0 +1,59 @@
+name: Deploy community market catalog
+
+# 把 catalog/ 发布成一个「插件市场索引源」：
+#   https://<owner>.github.io/dsh-taskbox/v1/plugins.json
+# 首次启用：仓库 Settings → Pages → Build and deployment → Source 选 “GitHub Actions”。
+on:
+  push:
+    branches: [main]
+    paths:
+      - catalog/**
+      - pkg/icon.svg
+      - scripts/validate-catalog.mjs
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate catalog metadata
+        run: node scripts/validate-catalog.mjs
+
+      - name: Build static catalog site
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir -p _site/v1/plugins
+          cp catalog/catalog-source.json _site/catalog-source.json
+          cp catalog/v1/plugins.json _site/v1/plugins/index.json
+          cp catalog/v1/plugins.json _site/v1/plugins.json
+          cp pkg/icon.svg _site/icon.svg
+          touch _site/.nojekyll
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,11 +1,12 @@
 {
   "name": "dsh-taskbox",
   "version": "0.1.0",
-  "private": true,
-  "description": "桌面置顶任务浮窗：在 Windows 桌面小方框里实时显示各对话的运行状态，需要授权/选择时直接点选确认，点一下就能把主窗口唤回前台。",
+  "description": "DSH（DeepSeek Harness）桌面端插件：Windows 桌面上始终置顶的任务浮窗，实时显示各对话运行状态，需要授权/选择时直接在小窗里点选，点一下唤回主窗口。",
   "type": "module",
+  "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
+    "./package.json": "./package.json",
     "./locale/*.json": "./locale/*.json",
     "./icon": "./icon.svg"
   },
@@ -13,22 +14,38 @@
     "lib",
     "assets",
     "cordis.patch.yml",
-    "locale/*.json",
+    "locale",
     "icon.svg",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "keywords": [
     "dsh",
     "dsh-plugin",
     "deepseek-harness",
-    "widget",
     "desktop",
-    "approval"
+    "widget",
+    "approval",
+    "windows"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/__GITHUB_OWNER__/dsh-taskbox.git",
+    "directory": "pkg"
+  },
+  "homepage": "https://github.com/__GITHUB_OWNER__/dsh-taskbox#readme",
+  "bugs": "https://github.com/__GITHUB_OWNER__/dsh-taskbox/issues",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "node ../test/host-selftest.mjs && node ../test/race-selftest.mjs",
+    "prepublishOnly": "node ../test/host-selftest.mjs && node ../test/race-selftest.mjs"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
-  },
-  "license": "MIT"
+  }
 }

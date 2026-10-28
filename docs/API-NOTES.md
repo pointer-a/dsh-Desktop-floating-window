@@ -1,8 +1,7 @@
-# DSH Host 侧 API 契约笔记（api-researcher）
+# DSH Host 侧 API 契约笔记
 
-> 环境：DSH 安装目录 `D:\DSH\resources\app.asar`（调研期用临时脚本解包到工作区 `_ref/app/`，该临时目录已删除，脚本思路见本文件「给 Host 实现的建议」）；desktop profile `C:\Users\14578\.dsh\profiles\desktop`
+> 环境：DSH 安装目录 `D:\DSH\resources\app.asar`（调研期用临时脚本解包到工作区 `_ref/app/`，该临时目录已删除，脚本思路见本文件「给 Host 实现的建议」）；desktop profile `%USERPROFILE%\.dsh\profiles\desktop`
 > 出处标注：`[inspect]` = `cordis_inspect_query` 返回值；`[d.ts]`/`[src:行]` = asar 内包源码（`@deepseek-ai/<pkg>/lib/...`）；`未确认` = 无直接来源，附猜测+验证法。
-> 本轮按 lead 的收口要求：**A(Q1) / B(Q6) / C(Q7) 写全；Q2/Q5 各给一句话结论；Q3/Q4 保留契约+链路（lead 已定案，这里只补“浏览器链路/race 风险”）**。
 
 ---
 
@@ -154,7 +153,7 @@
 
 ---
 
-### Q3 结论（lead 已定案，此处只补链路与 race）：浏览器点「允许一次」= 客户端 `ctx.remote.$on('approval/request')` 的监听器返回 `'allowed-once'`，经 Host 的 **api-remotes 转发监听器** 回到 `ctx.approval.request()` 的 waterfall；Host 侧没有任何 `approval.answer()` Remote，唯一应答入口就是 waterfall 监听器的返回值。
+### Q3 结论（补充浏览器链路与 race）：浏览器点「允许一次」= 客户端 `ctx.remote.$on('approval/request')` 的监听器返回 `'allowed-once'`，经 Host 的 **api-remotes 转发监听器** 回到 `ctx.approval.request()` 的 waterfall；Host 侧没有任何 `approval.answer()` Remote，唯一应答入口就是 waterfall 监听器的返回值。
 
 - 出处
   - `[src]` `dsh-user-approval/lib/index.js:172-189` `decide()`：`ctx.waterfall(scopeTarget(req.agent, req.agent), 'approval/request', req, () => Promise.resolve('unavailable'))`；signal abort → `'cancelled'`；policy `'never'` 直接 `'rejected'`（在 waterfall 之前）。
@@ -189,7 +188,7 @@
 
 ---
 
-### Q4 结论（lead 已定案，补语义）：`ctx.userQuestions.answer()` **只用于 continued（工具调用已返回 pending）的问题**；仍挂着（open）的问题只能由 `user-questions/request` waterfall 监听器返回答案；`askTimed` 超时返回 `{pending:true, callId}` 且只 abort 前台等待、不 abort 整个 Turn。
+### Q4 结论（补充语义）：`ctx.userQuestions.answer()` **只用于 continued（工具调用已返回 pending）的问题**；仍挂着（open）的问题只能由 `user-questions/request` waterfall 监听器返回答案；`askTimed` 超时返回 `{pending:true, callId}` 且只 abort 前台等待、不 abort 整个 Turn。
 
 - 出处
   - `[inspect]` host Event `user-questions/request`：`'user-questions/request'(this: Scoped<Agent>, request: AskUserQuestionRequestEvent, next: () => Promise<AskUserQuestionAnswer>): Promise<AskUserQuestionAnswer>`；`AskUserQuestionRequestEvent = { questions: AskUserQuestionItem[], agent?: Agent, signal?: AbortSignal, wait?: { callId: ToolCallId; timed?: boolean } }`；`AskUserQuestionItem = { id, question, detail?, header?, options?: {label, description?}[], multiSelect?, intent? }`；`AskUserQuestionAnswer = { answers: { id, selected: string[], custom?: string }[] }`（`selected` 是 **option label 文本**）。
@@ -246,7 +245,7 @@
     ```
   - `[src]` `dsh-commands/README.md:30-46`：名字规则“lowercase name containing letters, digits, `_` or `-`”；handler 结果文本由 UI 渲染，不进模型历史；`execute()` 会 append `command/run` / `command/done`（log-only）。
   - Config 校验：`[src]` `cordis/lib/types/fiber.js:35-49` `resolveConfig()` 用 schema 的 `~standard.validate(config)`，**不支持异步校验**；`[src]` `cordis/lib/types/registry.js:196-215` 插件形态可为 function / class / `{apply}` 对象，`Config`/`inject`/`name` 从插件对象读取。
-  - schemastery 在 profile 可用：`C:\Users\14578\.dsh\profiles\desktop\node_modules\schemastery`（3.18.0）与 `node_modules\@deepseek-ai\schemastery`（3.18.4）都在（`Get-Content package.json` 实读）。真实插件范例：`E:\CompanyProject\DSH-Night-Dispatch\dispatch-plugin\pkg`（`name` + `apply(ctx)`，无 Config，路由用 `ctx.inject(['webServer'], …)`）。
+  - schemastery 在 profile 可用：`%USERPROFILE%\.dsh\profiles\desktop\node_modules\schemastery`（3.18.0）与 `node_modules\@deepseek-ai\schemastery`（3.18.4）都在（`Get-Content package.json` 实读）。真实插件范例：`E:\CompanyProject\DSH-Night-Dispatch\dispatch-plugin\pkg`（`name` + `apply(ctx)`，无 Config，路由用 `ctx.inject(['webServer'], …)`）。
 - **可照抄最小插件（唤起浮窗的 /taskbox）**
   ```js
   // package.json 需要：{ "type":"module", "main":"lib/index.js",

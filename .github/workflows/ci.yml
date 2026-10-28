@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Host self-test
+        run: node test/host-selftest.mjs
+
+      - name: Widget-first race self-test
+        run: node test/race-selftest.mjs
+
+      - name: Validate market catalog
+        run: node scripts/validate-catalog.mjs

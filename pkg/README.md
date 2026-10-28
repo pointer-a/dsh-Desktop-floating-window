@@ -53,23 +53,37 @@
 DSH 的确认是**一次转发下来的请求**：浏览器那张卡只在它自己那次 RPC 结算后才会消失。
 所以本插件在小窗运行时采用「小窗优先」：
 
-1. 小窗在跑 → 先只把请求显示在小窗里，**默认 6 秒内不转发**给 DSH 浏览器界面；
+1. 小窗在跑 → 先只把请求显示在小窗里，**默认 20 秒内不转发**给 DSH 浏览器界面；
    在这段时间内作答，主窗口不会出现确认卡（也不会留下「小窗答完了、主窗口还在」的孤儿卡）。
-2. 6 秒内没人答 / 小窗没在运行 → 再转发给 DSH，两边都能答，谁先答都算数。
+2. 20 秒内没人答 / 小窗没在运行（冷启动时再加 8 秒）→ 再转发给 DSH，两边都能答，谁先答都算数。
 3. 如果已经转发之后你才在小窗作答，DSH 主窗口那张卡可能滞留到该轮工具结束（客户端行为）。
 
 宽限期可用 `DSH_TASKBOX_FORWARD_DELAY_MS` 调整（`0` = 立刻转发，行为同纯浏览器确认）。
 
 ## 安装（桌面端）
 
+### 通过插件市场
+
+DSH 侧边栏 → **插件** → **更多** → 启用「自定义插件市场」→ **发现** → 添加索引源：
+
+```
+https://__GITHUB_OWNER__.github.io/dsh-taskbox/v1/plugins.json
+```
+
+然后在列表里安装本插件（市场会从 npm 装 `dsh-taskbox@<version>`）。
+
+### 手动安装
+
 桌面端读的是 **`desktop` profile**，`dsh plugin --profile desktop` 被设计性拒绝。正确姿势是在桌面端会话里让
-宿主自己装：用当前宿主内置的 `plugin_manager`，`install_bundle` 指向本包的绝对路径（含 `package.json` 的那一层）：
+宿主自己装：用当前宿主内置的 `plugin_manager`，`install_bundle` 的 `target` 填 npm 包名：
 
 ```
-plugin_manager  action: install_bundle  target: "E:\\dsh插件\\桌面任务悬浮窗口\\pkg"
+plugin_manager  action: install_bundle  target: "dsh-taskbox"
 ```
 
-装完如果浮窗没有立刻出现，完全退出客户端（含托盘）再打开。卸载用 `remove_bundle`。
+本地开发时也可以把 `target` 换成仓库里 `pkg` 目录的绝对路径（`link:` 方式，改代码即时生效，但移动目录后要重装）。
+
+装完如果浮窗没有立刻出现，完全退出客户端（含托盘）再打开。卸载用 `remove_bundle`，`target: dsh-taskbox`。
 
 ## 环境变量
 

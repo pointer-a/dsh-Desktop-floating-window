@@ -1,0 +1,27 @@
+{
+  "manifestVersion": "1.0.0",
+  "providerId": "io.github.__GITHUB_OWNER__.dsh-taskbox",
+  "name": "dsh-taskbox",
+  "description": "Pins a small always-on-top box to the Windows desktop: live status for every conversation, inline answers for pending approvals and questions, and one click to bring the main window back.",
+  "homepage": "https://github.com/__GITHUB_OWNER__/dsh-taskbox",
+  "attribution": {
+    "name": "__GITHUB_OWNER__",
+    "url": "https://github.com/__GITHUB_OWNER__"
+  },
+  "transport": {
+    "kind": "https-json",
+    "endpoint": "https://__GITHUB_OWNER__.github.io/dsh-taskbox/v1/plugins.json",
+    "method": "GET"
+  },
+  "query": {
+    "supported": [
+      "q",
+      "category",
+      "cursor",
+      "limit"
+    ],
+    "defaultLimit": 50,
+    "maxLimit": 50,
+    "sorts": []
+  }
+}
