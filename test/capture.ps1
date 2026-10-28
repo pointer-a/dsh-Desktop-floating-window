@@ -2,11 +2,13 @@
 #
 # Finds windows with EnumWindows (more reliable than Process.MainWindowHandle: the mini box
 # uses ShowInTaskbar=False), matches the title substring, and grabs the smallest match.
+# Pass -ProcessId to capture one exact process (useful when a real instance is also running).
 #
-# Usage: powershell -File test/capture.ps1 -Out <abs png path> [-TitleLike 'DeepSeek']
+# Usage: powershell -File test/capture.ps1 -Out <abs png path> [-TitleLike 'DeepSeek'] [-ProcessId 1234]
 param(
   [Parameter(Mandatory = $true)][string]$Out,
-  [string]$TitleLike = 'DeepSeek'
+  [string]$TitleLike = 'DeepSeek',
+  [int]$ProcessId = 0
 )
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
@@ -52,6 +54,7 @@ foreach ($hWnd in [MbCap]::Find($TitleLike)) {
   if ($w -lt 80 -or $h -lt 20) { continue }
   $procId = 0
   [void][MbCap]::GetWindowThreadProcessId($hWnd, [ref]$procId)
+  if ($ProcessId -ne 0 -and $procId -ne $ProcessId) { continue }
   $candidates += [pscustomobject]@{ Handle = $hWnd; Rect = $rect; Width = $w; Height = $h; Pid = $procId }
 }
 if ($candidates.Count -eq 0) {

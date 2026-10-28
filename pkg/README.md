@@ -62,7 +62,10 @@ DSH 的确认是**一次转发下来的请求**：浏览器那张卡只在它自
 
 ## 安装（桌面端）
 
-### 通过插件市场
+本包已发布到 npm：[`dsh-taskbox`](https://www.npmjs.com/package/dsh-taskbox)。两种装法都不需要额外运行时
+（小窗用 Windows 自带的 PowerShell 5.1 + .NET Framework 4.8）。
+
+### 通过插件市场（推荐）
 
 DSH 侧边栏 → **插件** → **更多** → 启用「自定义插件市场」→ **发现** → 添加索引源：
 
@@ -72,18 +75,20 @@ https://pointer-a.github.io/dsh-Desktop-floating-window/v1/plugins.json
 
 然后在列表里安装本插件（市场会从 npm 装 `dsh-taskbox@<version>`）。
 
-### 手动安装
+### 直接用 npm 包安装
 
 桌面端读的是 **`desktop` profile**，`dsh plugin --profile desktop` 被设计性拒绝。正确姿势是在桌面端会话里让
 宿主自己装：用当前宿主内置的 `plugin_manager`，`install_bundle` 的 `target` 填 npm 包名：
 
 ```
-plugin_manager  action: install_bundle  target: "dsh-taskbox"
+plugin_manager  action: install_bundle  target: "dsh-taskbox"          # npm 最新版
+plugin_manager  action: install_bundle  target: "dsh-taskbox@0.1.0"    # 锁定版本
+plugin_manager  action: remove_bundle   target: "dsh-taskbox"          # 卸载（升级前也先卸）
 ```
 
 本地开发时也可以把 `target` 换成仓库里 `pkg` 目录的绝对路径（`link:` 方式，改代码即时生效，但移动目录后要重装）。
 
-装完如果浮窗没有立刻出现，完全退出客户端（含托盘）再打开。卸载用 `remove_bundle`，`target: dsh-taskbox`。
+装完如果浮窗没有立刻出现，完全退出客户端（含托盘）再打开；之后可在 DSH 里输入 `/taskbox` 唤回小窗。
 
 ## 环境变量
 

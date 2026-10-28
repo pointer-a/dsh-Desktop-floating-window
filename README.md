@@ -7,9 +7,13 @@
 *A tiny always-on-top desktop widget for DeepSeek Harness (DSH): live status for every conversation,
 inline answers for tool approvals and questions, one click back to the main window.*
 
-| 深色 · 待确认 | 浅色 · 紧凑态 |
+| 深色 · 待确认 | 浅色 · 待确认 |
 |---|---|
-| ![审批态](docs/shots/v3-approval-dark.png) | ![紧凑态](docs/shots/v5-compact-dark.png) |
+| ![深色审批态](docs/shots/v3-approval-dark.png) | ![浅色审批态](docs/shots/v3-approval-light.png) |
+
+| 深色 · 紧凑态（高度自适应） | 浅色 · 紧凑态（高度自适应） |
+|---|---|
+| ![深色紧凑态](docs/shots/v5-compact-dark.png) | ![浅色紧凑态](docs/shots/v5-compact-light.png) |
 
 ## 特性
 
@@ -31,8 +35,11 @@ inline answers for tool approvals and questions, one click back to the main wind
 
 ## 安装
 
-前置：**Windows 10/11** + DSH 桌面端（插件运行在桌面端的 Host 进程里，用系统自带的
-PowerShell 5.1 + .NET Framework 4.8 拉起小窗，不需要额外安装运行时）。
+前置：**Windows 10/11** + DSH 桌面端。小窗用系统自带的 PowerShell 5.1 + .NET Framework 4.8 启动，
+**不需要额外安装运行时**；插件本体是 npm 包 [`dsh-taskbox`](https://www.npmjs.com/package/dsh-taskbox)。
+
+> 桌面端读的是 `desktop` profile，`dsh plugin --profile desktop` 会被设计性拒绝 ——
+> 安装/卸载统一走宿主内置的 `plugin_manager`（在 DSH 会话里让 agent 调，或打开插件设置页操作）。
 
 ### 方式 A：通过插件市场（推荐）
 
@@ -43,18 +50,25 @@ PowerShell 5.1 + .NET Framework 4.8 拉起小窗，不需要额外安装运行�
    https://pointer-a.github.io/dsh-Desktop-floating-window/v1/plugins.json
    ```
 
-3. 在列表里找到 **桌面任务浮窗** → 安装 → 按提示重启客户端（首次安装需要让 Host 加载新插件）。
+3. 在列表里找到 **桌面任务浮窗** → 安装。市场会从 npm 装 `dsh-taskbox@<version>`。
 
-### 方式 B：宿主内置 `plugin_manager`
+### 方式 B：直接装 npm 包（不启用市场也能装）
 
-在 DSH 会话里直接说：
+在 DSH 会话里说一句即可：
 
-> 请用 `plugin_manager` 安装 `dsh-taskbox`（npm），装完告诉我是否需要重启。
+> 请用 `plugin_manager` 安装 `dsh-taskbox` 的最新版，装完告诉我是否需要重启。
 
-或者手动调 `plugin_manager`：`install_bundle`，`target` 填 `dsh-taskbox`。
-桌面端读的是 `desktop` profile，**不要**用 `dsh plugin --profile desktop`（会被设计性拒绝）。
+或者手动调 `plugin_manager`：
 
-### 方式 C：本地开发目录
+```
+install_bundle   target: "dsh-taskbox"          # 装 npm 上的最新版
+install_bundle   target: "dsh-taskbox@0.1.0"    # 锁定版本
+remove_bundle    target: "dsh-taskbox"          # 卸载（升级前也先卸）
+```
+
+包页：<https://www.npmjs.com/package/dsh-taskbox>　Release：<https://github.com/pointer-a/dsh-Desktop-floating-window/releases>
+
+### 方式 C：本地开发目录（`link:`，改代码即时生效）
 
 ```powershell
 git clone https://github.com/pointer-a/dsh-Desktop-floating-window.git
@@ -62,7 +76,11 @@ git clone https://github.com/pointer-a/dsh-Desktop-floating-window.git
 #   install_bundle  target: "<仓库路径>\pkg"
 ```
 
-安装后若浮窗没有出现，**完全退出客户端（含托盘）再打开**。
+### 安装后
+
+- 若浮窗没有出现：**完全退出客户端（含托盘）再打开**；或等 Host 热加载完成（通常几秒内会自己拉起小窗）。
+- **升级**：插件市场暂不支持原地升级，先 `remove_bundle` 再 `install_bundle`。
+- 小窗被关掉后，可在 DSH 里输入 `/taskbox` 唤回。
 
 ## 使用
 
