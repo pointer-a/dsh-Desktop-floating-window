@@ -1,0 +1,34 @@
+{
+  "name": "dsh-taskbox",
+  "version": "0.1.0",
+  "private": true,
+  "description": "桌面置顶任务浮窗：在 Windows 桌面小方框里实时显示各对话的运行状态，需要授权/选择时直接点选确认，点一下就能把主窗口唤回前台。",
+  "type": "module",
+  "exports": {
+    ".": "./lib/index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "lib",
+    "assets",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "widget",
+    "desktop",
+    "approval"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "MIT"
+}

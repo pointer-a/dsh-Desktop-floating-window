@@ -1,0 +1,6 @@
+# dsh-taskbox —— 挂载声明。
+# 安装后本 bundle 会向 profile 的配置树插入一行 host 插件；插件自己起一个回环 HTTP
+# 服务并拉起独立的 WPF 置顶小窗（见 ../README.md 与 ../../docs/PROTOCOL.md）。
+- insert:
+    - id: dsh-taskbox
+      name: dsh-taskbox
