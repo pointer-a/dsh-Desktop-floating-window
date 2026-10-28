@@ -67,7 +67,7 @@ DSH 的确认是**一次转发下来的请求**：浏览器那张卡只在它自
 DSH 侧边栏 → **插件** → **更多** → 启用「自定义插件市场」→ **发现** → 添加索引源：
 
 ```
-https://__GITHUB_OWNER__.github.io/dsh-taskbox/v1/plugins.json
+https://pointer-a.github.io/dsh-Desktop-floating-window/v1/plugins.json
 ```
 
 然后在列表里安装本插件（市场会从 npm 装 `dsh-taskbox@<version>`）。

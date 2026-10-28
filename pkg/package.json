@@ -30,11 +30,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/__GITHUB_OWNER__/dsh-taskbox.git",
+    "url": "git+https://github.com/pointer-a/dsh-Desktop-floating-window.git",
     "directory": "pkg"
   },
-  "homepage": "https://github.com/__GITHUB_OWNER__/dsh-taskbox#readme",
-  "bugs": "https://github.com/__GITHUB_OWNER__/dsh-taskbox/issues",
+  "homepage": "https://github.com/pointer-a/dsh-Desktop-floating-window#readme",
+  "bugs": "https://github.com/pointer-a/dsh-Desktop-floating-window/issues",
   "license": "MIT",
   "publishConfig": {
     "access": "public"

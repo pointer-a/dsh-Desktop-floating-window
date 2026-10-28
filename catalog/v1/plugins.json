@@ -37,11 +37,11 @@
         "en": "Pins a small always-on-top box to the Windows desktop: live status for every conversation, inline answers for pending approvals and questions, and one click to bring the main window back.",
         "zh": "在 Windows 桌面置顶一个小方框：实时看各对话在跑什么、几个在等确认，需要授权或选择时直接在小窗里点选，点一下把主窗口唤回前台。"
       },
-      "icon": "https://__GITHUB_OWNER__.github.io/dsh-taskbox/icon.svg",
-      "author": "__GITHUB_OWNER__",
-      "homepage": "https://github.com/__GITHUB_OWNER__/dsh-taskbox",
+      "icon": "https://pointer-a.github.io/dsh-Desktop-floating-window/icon.svg",
+      "author": "pointer-a",
+      "homepage": "https://github.com/pointer-a/dsh-Desktop-floating-window",
       "repository": {
-        "url": "https://github.com/__GITHUB_OWNER__/dsh-taskbox",
+        "url": "https://github.com/pointer-a/dsh-Desktop-floating-window",
         "directory": "pkg"
       },
       "metadata": {
@@ -59,7 +59,7 @@
       "versions": [
         {
           "version": "0.1.0",
-          "publishTimestamp": 1793187709,
+          "publishTimestamp": 1793187907,
           "source": {
             "type": "npm"
           }

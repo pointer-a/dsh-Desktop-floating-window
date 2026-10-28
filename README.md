@@ -40,7 +40,7 @@ PowerShell 5.1 + .NET Framework 4.8 拉起小窗，不需要额外安装运行�
 2. 打开 **发现** 标签 → **添加索引源**，填入：
 
    ```
-   https://__GITHUB_OWNER__.github.io/dsh-taskbox/v1/plugins.json
+   https://pointer-a.github.io/dsh-Desktop-floating-window/v1/plugins.json
    ```
 
 3. 在列表里找到 **桌面任务浮窗** → 安装 → 按提示重启客户端（首次安装需要让 Host 加载新插件）。
@@ -57,7 +57,7 @@ PowerShell 5.1 + .NET Framework 4.8 拉起小窗，不需要额外安装运行�
 ### 方式 C：本地开发目录
 
 ```powershell
-git clone https://github.com/__GITHUB_OWNER__/dsh-taskbox.git
+git clone https://github.com/pointer-a/dsh-Desktop-floating-window.git
 # 然后在 DSH 里用 plugin_manager 安装本地的 pkg 目录：
 #   install_bundle  target: "<仓库路径>\pkg"
 ```
